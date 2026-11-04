@@ -42,6 +42,25 @@ function ready(did: string, ...postedDaysAgo: number[]): ActivityState {
 	};
 }
 
+/** Loaded, but stopped by the page cap `startDaysAgo` days back. */
+function capped(did: string, startDaysAgo: number, ...postedDaysAgo: number[]): ActivityState {
+	const state = ready(did, ...postedDaysAgo);
+	state.activity!.window = {
+		start: daysAgo(startDaysAgo),
+		end: daysAgo(0),
+		reason: 'fetch-limit',
+		truncated: true
+	};
+	return state;
+}
+
+const FAILED: ActivityState = {
+	status: 'error',
+	error: 'HTTP 502',
+	activity: null,
+	lastActive: null
+};
+
 /** A session on the network screen, with storage and the network left out. */
 function onNetwork(states: Record<string, ActivityState | null>) {
 	const session = new TriageSession();
@@ -119,6 +138,98 @@ describe('the network screen', () => {
 		await expect
 			.element(screen.getByText(/To compare 30 days, load at least 60 days of history/))
 			.toBeVisible();
+	});
+
+	it('links the lookback line to settings', async () => {
+		const session = onNetwork({ 'did:plc:a': ready('did:plc:a', 1) });
+		session.settings = { ...session.settings, lookbackDays: 59 };
+
+		const screen = render(NetworkScreen, { props: { session } });
+		await screen.getByRole('button', { name: 'Settings' }).click();
+
+		expect(session.phase).toBe('settings');
+	});
+
+	it('gives the share of counted accounts that posted', async () => {
+		const session = onNetwork({
+			'did:plc:a': ready('did:plc:a', 1),
+			'did:plc:b': ready('did:plc:b', 40),
+			'did:plc:c': ready('did:plc:c', 40),
+			'did:plc:d': ready('did:plc:d')
+		});
+
+		const screen = render(NetworkScreen, { props: { session } });
+
+		await expect
+			.element(screen.getByText(/^That is/))
+			.toHaveTextContent('That is 25% of the accounts you follow.');
+	});
+
+	it('says likes are not counted, and counts none', async () => {
+		const state = ready('did:plc:a', 40);
+		state.activity!.events.push({ kind: 'like', at: daysAgo(1) });
+		const session = onNetwork({ 'did:plc:a': state });
+
+		const screen = render(NetworkScreen, { props: { session } });
+
+		await expect
+			.element(screen.getByRole('heading', { level: 1 }))
+			.toHaveTextContent('0 of 1 account posted');
+		await expect.element(screen.getByText(/Likes are not counted/)).toBeVisible();
+	});
+
+	it('shows a fall in posts a day with a true minus sign', async () => {
+		const session = onNetwork({ 'did:plc:a': ready('did:plc:a', 1, 40, 45) });
+
+		const screen = render(NetworkScreen, { props: { session } });
+
+		await expect.element(screen.getByText('\u221250%')).toBeVisible();
+	});
+
+	it('shows no change, and says why, when the period before has no posts', async () => {
+		const session = onNetwork({ 'did:plc:a': ready('did:plc:a', 1) });
+
+		const screen = render(NetworkScreen, { props: { session } });
+
+		await expect
+			.element(screen.getByText('No posts in the 30 days before, so there is no change to show.'))
+			.toBeVisible();
+		expect(screen.getByText('Change', { exact: true }).elements()).toHaveLength(0);
+	});
+
+	it('says how many accounts the fetch limit leaves out of the comparison', async () => {
+		const session = onNetwork({
+			'did:plc:a': ready('did:plc:a', 1, 40),
+			'did:plc:b': capped('did:plc:b', 20, 1),
+			'did:plc:c': capped('did:plc:c', 5, 1)
+		});
+
+		const screen = render(NetworkScreen, { props: { session } });
+
+		await expect
+			.element(screen.getByText(/more than the app loads/))
+			.toHaveTextContent(
+				'2 accounts post or like more than the app loads, so not all of their earlier posts are loaded.'
+			);
+	});
+
+	it('says how many accounts failed to load and how many have no profile', async () => {
+		const session = onNetwork({
+			'did:plc:a': ready('did:plc:a', 1),
+			'did:plc:b': FAILED,
+			'did:plc:c': FAILED,
+			'did:plc:d': null
+		});
+		session.subjects[3] = { ...session.subjects[3], profile: null };
+
+		const screen = render(NetworkScreen, { props: { session } });
+
+		await expect
+			.element(screen.getByText(/could not be loaded/))
+			.toHaveTextContent('Activity could not be loaded for 2 accounts');
+		await expect
+			.element(screen.getByText(/no profile/))
+			.toHaveTextContent('1 account has no profile, so it is not counted.');
 	});
 
 	it('offers no action on the list, only a link to each account', async () => {
