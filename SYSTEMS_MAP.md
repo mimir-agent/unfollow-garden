@@ -40,7 +40,8 @@ unfollow-garden/
 │   │   │   ├── x-rates.ts     # X's dated rate card, and the bill line by line
 │   │   │   └── meter.svelte.ts # counts of what actually crossed the network
 │   │   ├── stats/
-│   │   │   └── activity-stats.ts   # the PRD's metric definitions, as pure functions
+│   │   │   ├── activity-stats.ts   # the PRD's metric definitions, as pure functions
+│   │   │   └── network-stats.ts    # the network metric definitions, across every follow
 │   │   ├── storage/
 │   │   │   ├── db.ts          # IndexedDB schema, decisions, undo, follows, activity, runs
 │   │   │   └── backup.ts      # export/import format, validation, persistence request
@@ -91,10 +92,10 @@ Fragile: **Development must run on `127.0.0.1`, not `localhost`** — RFC 8252 b
 ### Activity and metrics
 
 For: What a subject has been doing, how far back that is actually known, and the figures the decision rests on.
-Lives at: `src/lib/atproto/activity.ts`, `src/lib/stats/activity-stats.ts`, `src/lib/triage/scanner.svelte.ts`
-Why this shape: Fetching, measuring, and scheduling change for different reasons, so they are three modules. The metric definitions in particular are pure functions over an event list, which is what lets them be tested against `PRD.md` directly rather than through the screen that renders them — and they decide which accounts a person unfollows.
-Seams: `loadActivity` is the only place either source is fetched; `computeStats` is the only place a metric is defined; `ActivityScanner.start` is the only place concurrency and caching live. `onRateLimitWait` in `xrpc.ts` is the single signal that a request is stalled on a 429.
-Fragile: **The covered window is the load-bearing idea.** Metrics count only events inside it, because each source loads at most five pages — a subject who likes 300 posts a day fills that in under a week and would otherwise read as inactive since last Tuesday. Likes come from the subject's own PDS, an arbitrary third-party host that may be down or send no CORS headers; that failure belongs to the subject and is shown on their card, never thrown. `ActivityState.lastActive` is precomputed at load because the queue sorts every undecided subject by it on each advance.
+Lives at: `src/lib/atproto/activity.ts`, `src/lib/stats/activity-stats.ts`, `src/lib/stats/network-stats.ts`, `src/lib/triage/scanner.svelte.ts`
+Why this shape: Fetching, measuring, and scheduling change for different reasons, so they are three modules. The metric definitions in particular are pure functions over an event list, which is what lets them be tested against `PRD.md` directly rather than through the screen that renders them — and they decide which accounts a person unfollows. The network metrics are a second module beside them rather than a branch inside them: they read every account at once and anchor each one's periods to its own load time, where `computeStats` reads one account across its whole window.
+Seams: `loadActivity` is the only place either source is fetched; `computeStats` is the only place a per-account metric is defined, and `computeNetworkStats` the only place a network one is. `ActivityScanner.start` is the only place concurrency and caching live. `onRateLimitWait` in `xrpc.ts` is the single signal that a request is stalled on a 429. `TriageSession.network` is the only reader of the scanner's map for the network figures, and it reads it untracked, so the scan does not drive recomputation; `refreshNetwork` does.
+Fragile: **The covered window is the load-bearing idea.** Metrics count only events inside it, because each source loads at most five pages — a subject who likes 300 posts a day fills that in under a week and would otherwise read as inactive since last Tuesday. Likes come from the subject's own PDS, an arbitrary third-party host that may be down or send no CORS headers; that failure belongs to the subject and is shown on their card, never thrown. `ActivityState.lastActive` is precomputed at load because the queue sorts every undecided subject by it on each advance. `computeNetworkStats` compares event times as ISO strings rather than parsing them, which holds only because every stored timestamp went through `toISOString`; at 5,000 accounts parsing them is most of the budget.
 
 ### Runs
 
@@ -117,8 +118,8 @@ Fragile: `current` is state, never derived from the queue. Deriving it would mak
 For: The rendered product surface — the single route, the four screens it switches between, and the document shell.
 Lives at: `src/routes/+layout.ts`, `src/routes/+layout.svelte`, `src/routes/+page.svelte`, `src/lib/components/`, `src/app.html`, `src/app.css`, `src/app.d.ts`
 Why this shape: `+layout.ts` sets `ssr = false` for the whole app. Every screen reads from IndexedDB and the user's OAuth session, neither of which exists on a server — and rendering server-side would mean sending a server data the PRD says never leaves the browser.
-Seams: `+page.svelte` switches on `session.phase`, so a new screen is a new phase and a new branch. `src/app.css` is the single global-style entry point (the stylebase import plus app-wide rules). Keyboard triage is handled in `TriageScreen` on `svelte:window`, guarded against text fields and modifier keys.
-Fragile: `ssr = false` is a project-wide invariant, not a per-route convenience — a route that re-enables it is a privacy regression, not a performance tweak.
+Seams: `+page.svelte` switches on `session.phase`, so a new screen is a new phase and a new branch. `AppChrome`'s utility links are the way into the secondary screens that are not part of the triage flow — settings, and the follows screen (`NetworkScreen`, phase `'network'`); each such screen leaves through `BackLink`. `src/app.css` is the single global-style entry point (the stylebase import plus app-wide rules). Keyboard triage is handled in `TriageScreen` on `svelte:window`, guarded against text fields and modifier keys.
+Fragile: `ssr = false` is a project-wide invariant, not a per-route convenience — a route that re-enables it is a privacy regression, not a performance tweak. `NetworkScreen` makes no requests, and that is a stated promise (NET-1): it has no avatars because each would be an image load from a CDN, and its own test fails on any fetch.
 
 ### Links out
 

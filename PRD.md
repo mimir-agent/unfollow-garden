@@ -222,6 +222,34 @@ LINK-1. The user chooses which web client profile and post links open in.
   the chosen client — a bio mention on a client that needs a DID, before that
   handle has been resolved — falls back rather than being built wrong.
 
+### Across all follows
+
+NET-1. The user can see how many of the accounts they follow posted recently, and how that
+compares with the period before. The figures and terms are defined in "Network metrics."
+
+- The screen is reached from the links beside Settings, and only while signed in.
+- The period is 7, 30, or 90 days, and 30 by default. A period is offered only when the
+  lookback is at least twice its length. Otherwise the screen says how much lookback it needs
+  and links to settings.
+- Only accounts followed now are included, in both periods. Keep and unfollow decisions do not
+  change which accounts are included.
+- Counted accounts plus the accounts not counted for each reason (still loading, failed to load,
+  unavailable) equal the number of accounts followed. Each reason is shown with its count.
+- An account whose likes could not be loaded, but whose posts did, is counted.
+- The headline gives the number and share of counted accounts that posted in the current period.
+- Likes are not counted in any figure, and the screen says so.
+- Posts per day are shown for both periods over the compared accounts, with the change as a
+  signed percentage. When the prior period has no posts, no percentage is shown.
+- The number of counted accounts left out of the comparison by the fetch limit is shown.
+- The series shows the compared accounts' posts across both periods: 14 buckets of 1 day for
+  7 days, 20 of 3 days for 30, and 20 of 9 days for 90. The prior period is the first half.
+- The list shows every counted account that posted in the prior period and not in the current
+  one, ordered by its prior-period count, most first, then by its last post, most recent first.
+  Each links to the account in the chosen web client (LINK-1).
+- No action applies to the list as a whole.
+- Opening the screen or changing the period sends no network request. While activity is still
+  loading, the figures update as accounts load and say how many accounts they are based on.
+
 ### Backup
 
 BACKUP-1. The user can export decisions, settings, the undo stack, and run records to a versioned JSON file. The activity cache is not exported.
@@ -284,6 +312,32 @@ pretending it away.
 The part of the lookback outside the covered window is hatched and labeled
 either "not loaded (fetch limit reached)" or "before the account existed." The
 strip is the visual center of the account view.
+
+### Network metrics
+
+These definitions are the contract for `network-stats`. They are unit tested independently of
+the UI, and they use the events and covered windows defined above. As everywhere in this
+section, only events inside an account's covered window count.
+
+Each account's periods are measured back from that account's own load time, the end of its
+covered window. The current period is the last P days. The prior period is the P days before
+that. Activity is cached for up to 24 hours, so two accounts' periods can be up to a day apart.
+
+| Metric             | Definition                                                                                                                                                                                                                                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Counted accounts   | Accounts followed now whose activity has loaded. Accounts still loading, accounts whose activity failed to load, and accounts with no profile are not counted. They are counted separately by reason.                                                                                                         |
+| Posted             | At least 1 post, reply, or repost in the period. Likes are not counted, because they never reach a follower's timeline and they come from third-party PDSes that can fail.                                                                                                                                    |
+| Posted in period   | The counted accounts that posted in the current period, as a number and as a share of counted accounts.                                                                                                                                                                                                       |
+| Compared accounts  | Counted accounts whose covered window starts at or before the start of the prior period, plus those whose window starts at account creation. An account whose window was truncated by a page cap after the prior period started is left out, and the number left out is shown.                                |
+| Posts per day      | For the compared accounts, the posts, replies, and reposts in a period divided by P, for each period. The change is the signed percentage from the prior period to the current one. There is no change when the prior period has no posts.                                                                    |
+| Series             | The compared accounts' posts, replies, and reposts across both periods in equal buckets: 14 of 1 day when P is 7, 20 of 3 days when P is 30, and 20 of 9 days when P is 90. Buckets are placed relative to each account's own load time and summed across accounts. Each period is a whole number of buckets. |
+| Posted before only | Counted accounts with at least 1 post, reply, or repost in the prior period and none in the current one. Ordered by prior-period count, most first, then by last post, most recent first.                                                                                                                     |
+
+The periods are 7, 30, and 90 days. A period is offered only when twice its length fits in the
+lookback, so the prior period is never cut off by it.
+
+Every figure is computed from activity already loaded for triage. The network view makes no
+requests of its own.
 
 ## Data sources
 
@@ -417,7 +471,7 @@ Rules carried from the prototype:
 
 ## Interface
 
-Screens: sign in, loading, triage, review, run progress, runs, settings.
+Screens: sign in, loading, triage, review, run progress, runs, settings, follows.
 
 Visual direction:
 
