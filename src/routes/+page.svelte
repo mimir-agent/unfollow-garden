@@ -9,6 +9,7 @@
 	import KeptScreen from '$lib/components/KeptScreen.svelte';
 	import CostNote from '$lib/components/CostNote.svelte';
 	import CostScreen from '$lib/components/CostScreen.svelte';
+	import NetworkScreen from '$lib/components/NetworkScreen.svelte';
 	import AppChrome from '$lib/components/AppChrome.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import { exact } from '$lib/format';
@@ -62,6 +63,8 @@
 			<KeptScreen {session} />
 		{:else if session.phase === 'cost'}
 			<CostScreen {session} />
+		{:else if session.phase === 'network'}
+			<NetworkScreen {session} />
 		{:else}
 			<section class="[ done ] [ l:stage ]">
 				<h1 class="u:fs-5">

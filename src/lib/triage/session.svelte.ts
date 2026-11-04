@@ -1,3 +1,4 @@
+import { untrack } from 'svelte';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import type { BrowserOAuthClient } from '@atproto/oauth-client-browser';
 import {
@@ -37,6 +38,7 @@ import { IdentityProbe } from './identity.svelte';
 import { HandleResolver } from './handles.svelte';
 import { CostMeter } from '$lib/cost/meter.svelte';
 import { RunController } from './runs.svelte';
+import { computeNetworkStats, offeredPeriod, type Period } from '$lib/stats/network-stats';
 
 export type Phase =
 	| 'signed-out'
@@ -50,6 +52,8 @@ export type Phase =
 	| 'kept'
 	/** The cost comparison, broken down so it can be checked. */
 	| 'cost'
+	/** How the accounts followed now posted over two recent periods. */
+	| 'network'
 	/** A run is in flight, or has just finished. */
 	| 'running'
 	/** Settings, past runs, backup, and delete-all. */
@@ -280,6 +284,45 @@ export class TriageSession {
 				)
 			)
 	);
+
+	/**
+	 * The period picked on the network screen.
+	 *
+	 * Held for the sitting only: it is a view setting, and not worth a change
+	 * to what storage holds.
+	 */
+	networkPeriodChosen = $state<Period>(30);
+
+	/** The chosen period, or the longest one the lookback still allows. */
+	networkPeriod = $derived(offeredPeriod(this.networkPeriodChosen, this.settings.lookbackDays));
+
+	/** Bumped by `refreshNetwork`, which is all that makes a scan's progress show. */
+	#networkClock = $state(0);
+
+	/**
+	 * The network figures, from activity the scan has already loaded.
+	 *
+	 * The scanner's map is read untracked, so a scan landing a few subjects a
+	 * second does not recompute every figure for every follow each time. The
+	 * screen asks for a refresh on a clock instead.
+	 *
+	 * Accounts a run has already unfollowed are not followed now, whatever the
+	 * snapshot still lists. Every other decision is irrelevant here: kept and
+	 * marked accounts are both still followed.
+	 */
+	network = $derived.by(() => {
+		void this.#networkClock;
+		const follows = this.subjects.filter(
+			(s) => this.decisions.get(s.subjectDid)?.decision !== 'unfollowed'
+		);
+		const period = this.networkPeriod;
+		return untrack(() => computeNetworkStats(follows, this.scanner.states, period));
+	});
+
+	/** Pick up whatever the scan has loaded since the figures were last computed. */
+	refreshNetwork(): void {
+		untrack(() => this.#networkClock++);
+	}
 
 	private countOf(decision: Decision): number {
 		let total = 0;
@@ -776,6 +819,11 @@ export class TriageSession {
 	/** Show the cost comparison line by line, so the figure can be checked. */
 	showCost(): void {
 		this.phase = 'cost';
+	}
+
+	/** Show how the accounts followed now posted, this period against the one before. */
+	showNetwork(): void {
+		this.phase = 'network';
 	}
 
 	/** Delete the follow records for every marked subject. */
