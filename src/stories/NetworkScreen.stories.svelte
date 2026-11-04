@@ -173,3 +173,8 @@
 <Story name="Lookback too short for 30 days" asChild>
 	<NetworkScreen session={parked([...steady, ...stopped], { lookbackDays: 30 })} />
 </Story>
+
+<!-- Under 14 days of lookback, no period fits twice. No figures, only the way to fix it. -->
+<Story name="Lookback too short for any period" asChild>
+	<NetworkScreen session={parked([...steady, ...stopped], { lookbackDays: 10 })} />
+</Story>

@@ -377,7 +377,7 @@ describe('offered periods', () => {
 		expect([offeredPeriod(90, 179), offeredPeriod(30, 59)]).toEqual([30, 7]);
 	});
 
-	it('refuses a lookback too short to compare any period', () => {
-		expect(() => offeredPeriod(30, 13)).toThrow('at least 14 days');
+	it('offers no period when the lookback is too short to compare even 7 days', () => {
+		expect([offeredPeriod(30, 13), offeredPeriod(7, 14)]).toEqual([null, 7]);
 	});
 });

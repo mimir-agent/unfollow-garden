@@ -293,7 +293,7 @@ export class TriageSession {
 	 */
 	networkPeriodChosen = $state<Period>(30);
 
-	/** The chosen period, or the longest one the lookback still allows. */
+	/** The chosen period, or the longest one the lookback still allows. Null if it allows none. */
 	networkPeriod = $derived(offeredPeriod(this.networkPeriodChosen, this.settings.lookbackDays));
 
 	/** Bumped by `refreshNetwork`, which is all that makes a scan's progress show. */
@@ -309,13 +309,16 @@ export class TriageSession {
 	 * Accounts a run has already unfollowed are not followed now, whatever the
 	 * snapshot still lists. Every other decision is irrelevant here: kept and
 	 * marked accounts are both still followed.
+	 *
+	 * Null when the lookback is too short to offer any period.
 	 */
 	network = $derived.by(() => {
 		void this.#networkClock;
+		const period = this.networkPeriod;
+		if (period === null) return null;
 		const follows = this.subjects.filter(
 			(s) => this.decisions.get(s.subjectDid)?.decision !== 'unfollowed'
 		);
-		const period = this.networkPeriod;
 		return untrack(() => computeNetworkStats(follows, this.scanner.states, period));
 	});
 

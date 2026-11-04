@@ -30,6 +30,7 @@ export interface QuietAccount {
 }
 
 export interface NetworkStats {
+	period: Period;
 	followed: number;
 	counted: number;
 	notCounted: { loading: number; failed: number; unavailable: number };
@@ -55,17 +56,13 @@ export function isOffered(period: Period, lookbackDays: number): boolean {
 	return 2 * period <= lookbackDays;
 }
 
-/** The period asked for if it is offered, otherwise the longest one that is. */
-export function offeredPeriod(wanted: Period, lookbackDays: number): Period {
+/**
+ * The period asked for if it is offered, otherwise the longest one that is.
+ * Null when the lookback is too short to offer any.
+ */
+export function offeredPeriod(wanted: Period, lookbackDays: number): Period | null {
 	if (isOffered(wanted, lookbackDays)) return wanted;
-	const longest = PERIODS.findLast((period) => isOffered(period, lookbackDays));
-	if (longest === undefined) {
-		throw new Error(
-			`Comparing activity needs a lookback of at least ${2 * PERIODS[0]} days, ` +
-				`but the lookback setting is ${lookbackDays}.`
-		);
-	}
-	return longest;
+	return PERIODS.findLast((period) => isOffered(period, lookbackDays)) ?? null;
 }
 
 export function computeNetworkStats(
@@ -157,6 +154,7 @@ export function computeNetworkStats(
 	quiet.sort((a, b) => b.priorPosts - a.priorPosts || b.lastPostAt.localeCompare(a.lastPostAt));
 
 	return {
+		period,
 		followed: follows.length,
 		counted,
 		notCounted,

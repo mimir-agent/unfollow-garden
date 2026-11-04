@@ -140,6 +140,19 @@ describe('the network screen', () => {
 			.toBeVisible();
 	});
 
+	it('says how much lookback it needs when it can compare no period, and links to settings', async () => {
+		const session = onNetwork({ 'did:plc:a': ready('did:plc:a', 1) });
+		session.settings = { ...session.settings, lookbackDays: 13 };
+
+		const screen = render(NetworkScreen, { props: { session } });
+		await expect
+			.element(screen.getByText(/^To compare 7 days/))
+			.toHaveTextContent('To compare 7 days, load at least 14 days of history in Settings.');
+		await screen.getByRole('button', { name: 'Settings' }).click();
+
+		expect(session.phase).toBe('settings');
+	});
+
 	it('links the lookback line to settings', async () => {
 		const session = onNetwork({ 'did:plc:a': ready('did:plc:a', 1) });
 		session.settings = { ...session.settings, lookbackDays: 59 };
