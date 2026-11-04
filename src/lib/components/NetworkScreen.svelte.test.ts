@@ -224,11 +224,7 @@ describe('the network screen', () => {
 			.toHaveTextContent(
 				'2 accounts post or like more than the app loads, so not all of their posts and likes from the last 60 days are loaded.'
 			);
-		await expect
-			.element(screen.getByText(/^Across/))
-			.toHaveTextContent(
-				'Across 1 account whose posts and likes both load back the full 60 days, or to when the account was created.'
-			);
+		await expect.element(screen.getByText(/^Across/)).toHaveTextContent('Across 1 account.');
 	});
 
 	it('says there is nothing to compare when no account loads back over both periods', async () => {
@@ -239,7 +235,7 @@ describe('the network screen', () => {
 		await expect
 			.element(screen.getByText(/^No account's/))
 			.toHaveTextContent(
-				"No account's posts and likes both load back the full 60 days yet, so there is nothing to compare."
+				"No account's posts and likes both load back the full 60 days, so there is nothing to compare."
 			);
 	});
 

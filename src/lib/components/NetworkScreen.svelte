@@ -182,7 +182,7 @@
 			<div class="compare">
 				{#if stats.compared === 0}
 					<p class="empty u:fs-1">
-						No account's posts and likes both load back the full {2 * period} days yet, so there is nothing
+						No account's posts and likes both load back the full {2 * period} days, so there is nothing
 						to compare.
 					</p>
 				{:else}
@@ -239,8 +239,7 @@
 						</p>
 						<p class="u:fs-0 tabular">
 							Across {exact(stats.compared)}
-							{plural(stats.compared, 'account', 'accounts')} whose posts and likes both load back the
-							full {2 * period} days, or to when the account was created.
+							{plural(stats.compared, 'account', 'accounts')}.
 						</p>
 					{/if}
 					{#if stats.fetchLimited === 1}
