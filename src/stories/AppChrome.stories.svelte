@@ -69,3 +69,11 @@
 <Story name="On settings" asChild>
 	<AppChrome session={parked('settings')} />
 </Story>
+
+<!--
+	On the network screen its own link becomes plain text marked as the current
+	page, keeping its place so the links beside it do not move.
+-->
+<Story name="On follows" asChild>
+	<AppChrome session={parked('network')} />
+</Story>

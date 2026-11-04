@@ -67,6 +67,17 @@
 				onconfirm={() => session.resetDecisions()}
 			/>
 		</div>
+		<!--
+			Hidden while the follow list loads, when there is nothing to count
+			and leaving would break the load. On its own screen it is plain
+			text, for the same reason the wordmark is: inert exactly when the
+			action would be.
+		-->
+		{#if session.phase === 'network'}
+			<span class="current" aria-current="page">Follows</span>
+		{:else if session.phase !== 'loading'}
+			<Button data-variant="link" onclick={() => session.showNetwork()}>Follows</Button>
+		{/if}
 		<Button data-variant="link" onclick={() => session.openSettings()}>Settings</Button>
 		<Button data-variant="link" onclick={() => session.signOut()}>Sign out</Button>
 	</div>
@@ -178,6 +189,18 @@
 		}
 
 		/*
+		 * Matched to the buttons beside it. A bare span would come out lighter,
+		 * and with the body's line height it sits half a pixel above them.
+		 */
+		.current {
+			font-family: var(--ff-ui);
+			font-size: var(--fs-0);
+			font-weight: 600;
+			line-height: 1;
+			color: var(--ink);
+		}
+
+		/*
 		 * At rest the reset is a peer of the other two links and carries no
 		 * more weight than they do. Once armed it stops being a link: the
 		 * confirming button keeps its full destructive styling, because at that
@@ -228,7 +251,7 @@
 				padding-block: 0;
 				padding-inline: var(--space-lg);
 				/*
-				 * Three controls share the band now, so the gap tightens rather
+				 * Four controls share the band now, so the gap tightens rather
 				 * than letting the row wrap out of a fixed-height band and
 				 * disappear behind the card.
 				 */
@@ -236,7 +259,8 @@
 			}
 
 			.utility :global(.button[data-variant='link']),
-			.reset :global(.button[data-variant='quiet']) {
+			.reset :global(.button[data-variant='quiet']),
+			.current {
 				color: var(--chip-ink);
 			}
 

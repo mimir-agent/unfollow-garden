@@ -83,7 +83,11 @@ describe('the wordmark', () => {
 		const advance = vi.spyOn(session, 'advance');
 
 		const screen = render(AppChrome, { props: { session } });
-		await screen.getByRole('button', { name: 'unfollow.garden' }).click();
+		// On the word itself. On a phone the band spans the page and the
+		// utility links sit over its far half, so its middle is a link.
+		await screen
+			.getByRole('button', { name: 'unfollow.garden' })
+			.click({ position: { x: 8, y: 8 } });
 
 		expect(advance).toHaveBeenCalled();
 	});
@@ -139,5 +143,30 @@ describe('start over', () => {
 		const screen = render(AppChrome, { props: { session } });
 
 		expect(screen.container.querySelector('.utility')).toBeNull();
+	});
+});
+
+describe('the follows link', () => {
+	it('opens the network screen', async () => {
+		const session = signedIn();
+
+		const screen = render(AppChrome, { props: { session } });
+		await screen.getByRole('button', { name: 'Follows' }).click();
+
+		expect(session.phase).toBe('network');
+	});
+
+	it('is plain text marked as the current page once there', async () => {
+		const screen = render(AppChrome, { props: { session: signedIn('network') } });
+
+		await expect.element(screen.getByText('Follows')).toHaveAttribute('aria-current', 'page');
+		expect(screen.getByRole('button', { name: 'Follows' }).query()).toBeNull();
+	});
+
+	it('is not offered while the follow list loads, when there is nothing to count', async () => {
+		const screen = render(AppChrome, { props: { session: signedIn('loading') } });
+
+		await expect.element(screen.getByRole('button', { name: 'Settings' })).toBeVisible();
+		expect(screen.container.textContent).not.toContain('Follows');
 	});
 });
