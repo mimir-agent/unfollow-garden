@@ -4,7 +4,7 @@
 	import BackLink from '$lib/components/BackLink.svelte';
 	import { identityLink } from '$lib/atproto/links';
 	import { duration, exact, longDate } from '$lib/format';
-	import { isOffered, PERIODS } from '$lib/stats/network-stats';
+	import { isOffered, PERIODS, type Period } from '$lib/stats/network-stats';
 	import type { TriageSession } from '$lib/triage/session.svelte';
 
 	let { session }: { session: TriageSession } = $props();
@@ -135,10 +135,7 @@
 				orientation="horizontal"
 				aria-labelledby="network-period"
 				bind:value={
-					() => String(period),
-					(value) =>
-						(session.networkPeriodChosen =
-							PERIODS.find((days) => String(days) === value) ?? session.networkPeriodChosen)
+					() => String(period), (value) => (session.networkPeriodChosen = Number(value) as Period)
 				}
 			>
 				{#each PERIODS as days (days)}
