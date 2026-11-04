@@ -14,7 +14,8 @@ Align → prep → build → verify → review → land.
 
 `engineering-discipline` is in effect from the first line of code to the last.
 Its stopping rules govern every interruption in this process; don't restate
-them here, follow them.
+them here, follow them. Code is written to `CLAUDE.md`, "Legibility" — the same
+standard `/review` blocks on.
 
 ## 1. Align
 
@@ -56,15 +57,25 @@ could merge independently — say so and suggest `/project-plan` before any prep
 
 ## 2. Prep
 
-1. Create a git worktree for the task.
-2. Fetch `origin` and branch from the latest `origin/main`, named
-   `<type>/<slug>` per `CLAUDE.md`. Put the issue number in the slug when the
-   task tracks one — the branch name is the handle tying this work to its
-   tracker entry.
-3. Read `SYSTEMS_MAP.md`. Use it to find the relevant area. Do not scan the
+1. Fetch `origin` and create the task's worktree and branch from the latest
+   `origin/main`. The branch is `<type>/<slug>` per `CLAUDE.md`; put the issue
+   number in the slug when the task tracks one — the branch name is the handle
+   tying this work to its tracker entry. The worktree is a sibling of the main
+   checkout, named after the branch with `/` replaced by `-`:
+
+   ```bash
+   git fetch origin
+   git worktree add ../<type>-<slug> -b <type>/<slug> origin/main
+   ```
+
+2. Read `SYSTEMS_MAP.md`. Use it to find the relevant area. Do not scan the
    repository; that is what the map exists to prevent.
-4. Write the brief ([brief.md](brief.md)).
-5. Open a draft PR titled for the task, with the brief as its body.
+3. Write the brief ([brief.md](brief.md)).
+4. Open a draft PR titled for the task. The body follows `CLAUDE.md`,
+   "Agent-authored output": the brief goes in the collapsed block, and the summary
+   above it is the goal in one line, plus anything you already know needs the
+   human's judgement. Nothing has changed yet, so the summary says so; land
+   rewrites it.
 
 The draft PR exists from here on, so the work is inspectable while it happens
 rather than only at the end.
@@ -79,9 +90,10 @@ cuts through every layer the story touches and leaves the app shippable
 
 1. Build the slice. One concern at a time — behavior or structure, never both
    ([SLICE-1], [SLICE-2]).
-2. For each user story the slice completes, dispatch `story-test-writer` with
-   the story's "Done when" line, the seam surface, the destination path, and one
-   existing test file as a style reference. Nothing else — never the diff, never
+2. For each user story the slice completes, dispatch `story-test-writer`
+   (`.claude/agents/story-test-writer.md`) with the story's "Done when" line,
+   the seam surface, the destination path, and one existing test file as a style
+   reference. Nothing else — never the diff, never
    the implementation. Shape and seam per [testing.md](testing.md).
 3. A slice that only plumbs toward a story adds no tests. One story, one test.
 4. Run the tier that applies ([testing.md](testing.md), "What runs when").
@@ -126,7 +138,19 @@ run and agent follows it.
    The brief's seam assessment is the signal. Anything load-bearing you found
    that isn't a declared contract goes in the area's `Fragile` field
    ([CONTRACT-1]).
-2. Push the branch. Update the PR body if the brief diverged during the task.
-3. Comment on the PR with: whether anything blocks merge, where the human should
-   focus, and the open-questions queue. Lead with the verdict ([ASK-5]).
-4. Delete the worktree. Return to `main` and pull.
+2. Prune the tests this branch added or changed, as the last change before
+   pushing. Delete any test whose outcome nothing outside the unit can
+   influence: one that pins a constant, an internal helper's math, internal
+   state, or an internal selector. Keep the tests driven by what callers
+   control: props, arguments, requests, user settings. Follow
+   [testing.md](testing.md), "Prune pass". The
+   deletions are one `chore(tests): prune` commit.
+3. Push the branch. Rewrite the PR body's summary for what actually changed,
+   why, where the human's judgement is needed, and one verification line. Update
+   the collapsed brief if it diverged during the task.
+4. Comment on the PR, following `CLAUDE.md`, "Agent-authored output", with
+   `<!-- suede:closeout -->` as the first line. The summary leads with whether
+   anything blocks merge ([ASK-5]), then where the human should focus, then the
+   open-questions queue, one line per question. The reasoning behind each goes
+   in the collapsed block.
+5. Delete the worktree. Return to `main` and pull.

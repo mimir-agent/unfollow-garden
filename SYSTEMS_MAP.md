@@ -163,7 +163,7 @@ Fragile: `eslint.config.js` builds its ignore list from `.gitignore` (`includeIg
 ### Process layer
 
 For: How work happens in this repo — the rulebook, the task-process skills, the decision graph, and release conventions; independent of what the app does.
-Lives at: `CLAUDE.md`, `.claude/skills/` (`task` is the spine; `project-plan`, `review`, `writing-css`, `design` support it), `.claude/commands/`, `.claude/hooks/`, `.deciduous/`
+Lives at: `CLAUDE.md`, `.claude/skills/` (`task` is the spine; `project-plan`, `review`, `writing-css`, `design`, `orient` support it), `.claude/agents/`, `.claude/commands/`, `.claude/hooks/`, `.deciduous/`
 Why this shape: Inherited from suede at `2026.7.3.3` and tailored at kickoff. The project standardized on Claude — the `.pi/` layer and `AGENTS.md` were dropped rather than maintained in parallel, because a second copy of the process rules rots the moment someone edits only one.
 Seams: `deciduous update` owns `.claude/commands/`, `.claude/hooks/`, and its own section of `CLAUDE.md`; it preserves custom content, so house conventions sit alongside the generated block rather than replacing it.
 Fragile: `.deciduous/` is per-machine (only `sync/` is committable), so the graph does not travel with a clone. `docs/` is the regenerated graph viewer — gitignored; never edit by hand. A pre-edit hook blocks edits unless a goal or action node was logged recently, so real-time graph logging is enforced rather than encouraged.

@@ -5,7 +5,7 @@
 	"description": "Review every Bluesky account you follow, one at a time, and unfollow the ones you are done with.",
 	"type": "module",
 	"suede": {
-		"from": "2026.7.3.3"
+		"from": "2026.10.28.2"
 	},
 	"scripts": {
 		"dev": "vite dev",
