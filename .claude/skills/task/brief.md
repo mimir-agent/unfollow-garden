@@ -1,7 +1,9 @@
 # The brief
 
-The brief is the PR body. It is also the handoff to a fresh session that has no
-memory of the alignment conversation.
+The brief is the agent half of the PR body: it sits in the collapsed block under
+the human summary (`CLAUDE.md`, "Agent-authored output"). It is the handoff to a
+fresh session that has no memory of the alignment conversation, so write it for
+that reader, not for the human reviewing the PR.
 
 **Success bar:** a fresh agent session, given only this file and
 `SYSTEMS_MAP.md`, should start building the first slice without asking what the
