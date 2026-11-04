@@ -245,6 +245,25 @@ describe('the network screen', () => {
 			.toHaveTextContent('1 account has no profile, so it is not counted.');
 	});
 
+	it('points to the lines that say why, when no account could be counted', async () => {
+		const session = onNetwork({ 'did:plc:a': FAILED, 'did:plc:b': null });
+		session.subjects[1] = { ...session.subjects[1], profile: null };
+
+		const screen = render(NetworkScreen, { props: { session } });
+
+		const lede = screen.getByText(/could be counted/).element();
+		const reasons = screen.getByText(/could not be loaded/).element();
+		expect({
+			lede: lede.textContent?.replace(/\s+/g, ' ').trim(),
+			reasonsFollow: Boolean(
+				lede.compareDocumentPosition(reasons) & Node.DOCUMENT_POSITION_FOLLOWING
+			)
+		}).toEqual({
+			lede: 'No account you follow could be counted. The lines below say why.',
+			reasonsFollow: true
+		});
+	});
+
 	it('offers no action on the list, only a link to each account', async () => {
 		const session = onNetwork({
 			'did:plc:a': ready('did:plc:a', 40),

@@ -86,7 +86,7 @@
 						No account's activity has loaded yet, so there is nothing to count. Figures appear here
 						as it loads.
 					{:else}
-						No account you follow could be counted. The lines above say why.
+						No account you follow could be counted. The lines below say why.
 					{/if}
 				</p>
 			{:else}

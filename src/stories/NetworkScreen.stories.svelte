@@ -161,6 +161,11 @@
 	<NetworkScreen session={parked([...steady, ...stopped], { loaded: 0 })} />
 </Story>
 
+<!-- Every account failed to load or has no profile, as when the network is down. -->
+<Story name="Nothing could be counted" asChild>
+	<NetworkScreen session={parked([], { failed: 3, unavailable: 1 })} />
+</Story>
+
 <!-- Everyone who posted in the earlier period also posted in the later one. -->
 <Story name="Nobody posted before only" asChild>
 	<NetworkScreen session={parked(steady)} />
