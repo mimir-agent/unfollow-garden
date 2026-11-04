@@ -222,7 +222,7 @@ describe('the network screen', () => {
 		await expect
 			.element(screen.getByText(/more than the app loads/))
 			.toHaveTextContent(
-				'2 accounts post or like more than the app loads, so not all of their earlier posts are loaded.'
+				'2 accounts post or like more than the app loads, so not all of their posts and likes from the last 60 days are loaded.'
 			);
 	});
 

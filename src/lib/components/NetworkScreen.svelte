@@ -244,13 +244,14 @@
 					{/if}
 					{#if stats.fetchLimited === 1}
 						<p class="u:fs-0 tabular">
-							1 account posts or likes more than the app loads, so not all of its earlier posts are
-							loaded. It is left out of this comparison.
+							1 account posts or likes more than the app loads, so not all of its posts and likes
+							from the last {2 * period} days are loaded. It is left out of this comparison.
 						</p>
 					{:else if stats.fetchLimited > 1}
 						<p class="u:fs-0 tabular">
 							{exact(stats.fetchLimited)} accounts post or like more than the app loads, so not all of
-							their earlier posts are loaded. They are left out of this comparison.
+							their posts and likes from the last {2 * period} days are loaded. They are left out of this
+							comparison.
 						</p>
 					{/if}
 				</div>
