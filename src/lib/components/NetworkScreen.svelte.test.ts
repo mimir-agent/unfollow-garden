@@ -224,6 +224,23 @@ describe('the network screen', () => {
 			.toHaveTextContent(
 				'2 accounts post or like more than the app loads, so not all of their posts and likes from the last 60 days are loaded.'
 			);
+		await expect
+			.element(screen.getByText(/^Across/))
+			.toHaveTextContent(
+				'Across 1 account whose posts and likes both load back the full 60 days, or to when the account was created.'
+			);
+	});
+
+	it('says there is nothing to compare when no account loads back over both periods', async () => {
+		const session = onNetwork({ 'did:plc:a': capped('did:plc:a', 20, 1) });
+
+		const screen = render(NetworkScreen, { props: { session } });
+
+		await expect
+			.element(screen.getByText(/^No account's/))
+			.toHaveTextContent(
+				"No account's posts and likes both load back the full 60 days yet, so there is nothing to compare."
+			);
 	});
 
 	it('says how many accounts failed to load and how many have no profile', async () => {
